@@ -28,6 +28,8 @@ def load_data():
             """
             SELECT *
             FROM analytics.main.pensions_prices
+            WHERE Type = 'UPF'
+            AND Value > 0
             """,
             connection
         )
@@ -70,11 +72,6 @@ df["Value"] = pd.to_numeric(
 )
 
 
-# Remove zeros and missing prices
-df = df[
-    (df["Value"] > 0) &
-    (df["Value"].notna())
-]
 
 
 # -----------------------------
