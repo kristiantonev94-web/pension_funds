@@ -109,7 +109,6 @@ df = df.sort_values(
 )
 
 
-
 # -----------------------------
 # Dashboard
 # -----------------------------
@@ -124,42 +123,30 @@ st.write(
 )
 
 
-# Fund selector
-
-funds = sorted(
-    df["Fund"].unique()
-)
-
-
-selected_fund = st.selectbox(
-    "Select pension fund",
-    funds
-)
-
-
-# Filter selected fund
-
-plot_df = df[
-    df["Fund"] == selected_fund
-].copy()
-
-
 # -----------------------------
-# Chart
+# Chart - all funds
 # -----------------------------
 
 fig = px.line(
-    plot_df,
+    df,
     x="Date",
     y="Price_EUR",
-    title=f"{selected_fund} - UPF price (EUR)",
+    color="Fund",
+    title="UPF pension fund prices (EUR)",
 )
 
 
 fig.update_layout(
     yaxis_title="Price (€)",
     xaxis_title="Date",
-    hovermode="x unified"
+    hovermode="x unified",
+    legend_title="Fund",
+    
+    # Allow clicking legend items
+    legend=dict(
+        itemclick="toggleothers",
+        itemdoubleclick="toggle"
+    )
 )
 
 
@@ -179,6 +166,6 @@ with st.expander(
 ):
 
     st.dataframe(
-        plot_df,
+        df,
         use_container_width=True
     )
