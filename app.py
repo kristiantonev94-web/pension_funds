@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.load_data import load_pension_data
+from load_data import load_pension_data
 
 
 st.set_page_config(
