@@ -1,27 +1,23 @@
 import streamlit as st
-from load_data import load_pension_data
+from databricks import sql
+import pandas as pd
 
 
-st.set_page_config(
-    page_title="Pension Dashboard",
-    page_icon="📈",
-    layout="wide"
-)
+@st.cache_data(ttl=3600)
+def load_data():
 
+    with sql.connect(
+        server_hostname=st.secrets["databricks"]["server_hostname"],
+        http_path=st.secrets["databricks"]["http_path"],
+        access_token=st.secrets["databricks"]["access_token"]
+    ) as connection:
 
-st.title("📈 Pension Dashboard")
+        df = pd.read_sql(
+            """
+            SELECT *
+            FROM analytics.main.pensions_prices
+            """,
+            connection
+        )
 
-
-df = load_pension_data()
-
-
-st.metric(
-    "Total records",
-    len(df)
-)
-
-
-st.dataframe(
-    df,
-    use_container_width=True
-)
+    return df
