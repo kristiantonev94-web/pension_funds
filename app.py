@@ -3,6 +3,12 @@ from databricks import sql
 import pandas as pd
 
 
+st.set_page_config(
+    page_title="Pension Dashboard",
+    layout="wide"
+)
+
+
 @st.cache_data(ttl=3600)
 def load_data():
 
@@ -16,8 +22,31 @@ def load_data():
             """
             SELECT *
             FROM analytics.main.pensions_prices
+            LIMIT 100
             """,
             connection
         )
 
     return df
+
+
+st.title("📈 Pension Dashboard")
+
+st.write("Loading data...")
+
+
+try:
+    df = load_data()
+
+    st.success(
+        f"Loaded {len(df)} rows"
+    )
+
+    st.dataframe(
+        df,
+        use_container_width=True
+    )
+
+except Exception as e:
+    st.error("Error connecting to Databricks:")
+    st.exception(e)
