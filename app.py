@@ -15,10 +15,10 @@ st.set_page_config(
 # Load data from Databricks
 # -----------------------------
 
-# @st.cache_data(
-#     ttl=3600,
-#     show_spinner=False
-# )
+@st.cache_data(
+    ttl=3600,
+    show_spinner=False
+)
 def load_data():
 
     with sql.connect(
@@ -47,27 +47,6 @@ def load_data():
 
 df = load_data()
 
-
-# Date format
-df["Date"] = pd.to_datetime(
-    df["Date"]
-)
-
-
-# Clean fund names
-df["Fund"] = (
-    df["Fund"]
-    .astype(str)
-    .str.replace('"', '', regex=False)
-)
-
-
-# Keep only UPF
-df = df[
-    df["Type"] == "UPF"
-].copy()
-
-
 # Convert value
 df["Value"] = pd.to_numeric(
     df["Value"],
@@ -80,27 +59,6 @@ df["Value"] = pd.to_numeric(
 # -----------------------------
 # Currency conversion
 # -----------------------------
-
-euro_date = pd.Timestamp(
-    "2026-01-01"
-)
-
-df["Price_EUR"] = df["Value"]
-
-
-# Before euro adoption:
-# BGN -> EUR
-
-df.loc[
-    df["Date"] < euro_date,
-    "Price_EUR"
-] = (
-    df.loc[
-        df["Date"] < euro_date,
-        "Value"
-    ] / 1.95583
-)
-
 
 # Sort data
 
@@ -133,7 +91,7 @@ st.write(
 fig = px.line(
     df,
     x="Date",
-    y="Price_EUR",
+    y="Price EUR",
     color="Fund",
     title="UPF pension fund prices (EUR)",
 )
