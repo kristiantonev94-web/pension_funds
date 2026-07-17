@@ -15,10 +15,10 @@ st.set_page_config(
 # Load data from Databricks
 # -----------------------------
 
-@st.cache_data(
-    ttl=3600,
-    show_spinner=False
-)
+# @st.cache_data(
+#     ttl=3600,
+#     show_spinner=False
+# )
 def load_data():
 
     with sql.connect(
