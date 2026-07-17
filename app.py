@@ -182,33 +182,120 @@ st.subheader(
 )
 
 
-fig_members = px.line(
-    members,
-    x="Date",
-    y="Value",
-    color="Fund",
-    title="Number of insured persons in UPF",
+view_type = st.radio(
+    "View:",
+    [
+        "Trend",
+        "Market share"
+    ],
+    horizontal=True
 )
 
 
-fig_members.update_layout(
-    yaxis_title="Insured persons",
-    xaxis_title="Date",
-    hovermode="x unified",
-    legend_title="Fund",
+if view_type == "Trend":
 
-    legend=dict(
-        itemclick="toggleothers",
-        itemdoubleclick="toggle"
+    fig_members = px.line(
+        members,
+        x="Date",
+        y="Value",
+        color="Fund",
+        title="Number of insured persons in UPF",
     )
-)
+
+    fig_members.update_layout(
+        yaxis_title="Insured persons",
+        xaxis_title="Date",
+        hovermode="x unified",
+        legend_title="Fund",
+
+        legend=dict(
+            itemclick="toggleothers",
+            itemdoubleclick="toggle"
+        )
+    )
+
+
+else:
+
+    # Calculate market share
+    market = members.copy()
+
+    market["Total"] = (
+        market
+        .groupby("Date")["Value"]
+        .transform("sum")
+    )
+
+    market["Market Share"] = (
+        market["Value"] /
+        market["Total"] *
+        100
+    )
+
+
+    # Current ranking
+    latest_date = market["Date"].max()
+
+    ranking = (
+        market[market["Date"] == latest_date]
+        .sort_values(
+            "Market Share",
+            ascending=False
+        )["Fund"]
+        .tolist()
+    )
+
+
+    # Keep legend ordered by latest market share
+    market["Fund"] = pd.Categorical(
+        market["Fund"],
+        categories=ranking,
+        ordered=True
+    )
+
+
+    fig_members = px.area(
+        market.sort_values(
+            "Date"
+        ),
+        x="Date",
+        y="Market Share",
+        color="Fund",
+        groupnorm="percent",
+        title="UPF market share by insured persons (%)",
+    )
+
+
+    fig_members.update_layout(
+        yaxis_title="Market share (%)",
+        xaxis_title="Date",
+        hovermode="x unified",
+        legend_title="Fund",
+
+        legend=dict(
+            itemclick="toggleothers",
+            itemdoubleclick="toggle"
+        )
+    )
+
+
+    # Show latest ranking
+    st.caption(
+        "Current ranking (latest month): "
+        +
+        " → ".join(
+            [
+                f"{i+1}. {fund}"
+                for i, fund in enumerate(ranking)
+            ]
+        )
+    )
 
 
 st.plotly_chart(
     fig_members,
     width="stretch"
 )
-
 
 # -----------------------------
 # Members data preview
