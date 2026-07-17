@@ -57,7 +57,13 @@ def process_net_assets_data(df):
     """
     df = df.copy()
     df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
-    df["Date"] = pd.to_datetime(df["Date"])
+    df["Date"] = pd.to_datetime(
+        dict(
+            year=df["Year"],
+            month=df["Month"],
+            day=1
+        )
+    )
     df = df.sort_values(["Fund", "Date"])
     return df
 
