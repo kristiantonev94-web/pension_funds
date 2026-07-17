@@ -22,6 +22,7 @@ CACHE_TTL = 3600  # 1 hour
 DB_SCHEMA = "analytics.main"
 PRICES_TABLE = f"{DB_SCHEMA}.pensions_prices"
 MEMBERS_TABLE = f"{DB_SCHEMA}.pension_fund_members_upf"
+NET_ASSETS_TABLE = f"{DB_SCHEMA}.net_assets_upf"
 
 # Data filters
 PRICE_TYPE_FILTER = "UPF"
