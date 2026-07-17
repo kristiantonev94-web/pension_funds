@@ -45,17 +45,34 @@ def process_members_data(df):
     return df
 
 
-def calculate_market_share(members_df):
+def process_net_assets_data(df):
     """
-    Calculate market share from members data
+    Process and clean net assets data
     
     Args:
-        members_df: Processed members dataframe
+        df: Raw net assets dataframe
+        
+    Returns:
+        Processed dataframe
+    """
+    df = df.copy()
+    df["Value"] = pd.to_numeric(df["Value"], errors="coerce")
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df.sort_values(["Fund", "Date"])
+    return df
+
+
+def calculate_market_share(df):
+    """
+    Calculate market share from dataframe (works for both members and net assets)
+    
+    Args:
+        df: Processed dataframe with Value column
         
     Returns:
         Dataframe with market share column
     """
-    market = members_df.copy()
+    market = df.copy()
     
     market["Total"] = (
         market
