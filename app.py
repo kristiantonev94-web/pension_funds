@@ -91,7 +91,7 @@ st.write(
 fig = px.line(
     df,
     x="Date",
-    y="Price EUR",
+    y="Value",
     color="Fund",
     title="UPF pension fund prices (EUR)",
 )
