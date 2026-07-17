@@ -104,3 +104,70 @@ def create_market_share_chart(df):
     )
     
     return fig
+
+
+def create_net_assets_trend_chart(df):
+    """
+    Create line chart for net assets value trend
+    
+    Args:
+        df: Processed net assets dataframe
+        
+    Returns:
+        Plotly figure object
+    """
+    fig = px.line(
+        df,
+        x="Date",
+        y="Value",
+        color="Fund",
+        title="UPF pension fund net assets value (€)",
+    )
+    
+    fig.update_layout(
+        yaxis_title="Net Assets (€)",
+        xaxis_title="Date",
+        hovermode="x unified",
+        legend_title="Fund",
+        legend=dict(
+            itemclick="toggleothers",
+            itemdoubleclick="toggle"
+        ),
+        height=500
+    )
+    
+    return fig
+
+
+def create_net_assets_market_share_chart(df):
+    """
+    Create stacked area chart for net assets market share
+    
+    Args:
+        df: Market share dataframe with categorical Fund ordering
+        
+    Returns:
+        Plotly figure object
+    """
+    fig = px.area(
+        df.sort_values("Date"),
+        x="Date",
+        y="Market Share",
+        color="Fund",
+        groupnorm="percent",
+        title="UPF market share by net assets value (%)",
+    )
+    
+    fig.update_layout(
+        yaxis_title="Market share (%)",
+        xaxis_title="Date",
+        hovermode="x unified",
+        legend_title="Fund",
+        legend=dict(
+            itemclick="toggleothers",
+            itemdoubleclick="toggle"
+        ),
+        height=500
+    )
+    
+    return fig
