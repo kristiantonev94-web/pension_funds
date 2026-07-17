@@ -1,311 +1,86 @@
+"""
+Main entry point for Pension Funds Dashboard
+Multi-page Streamlit application
+"""
+
 import streamlit as st
-from databricks import sql
-import pandas as pd
-import plotly.express as px
 
-
+# Configure the main page
 st.set_page_config(
     page_title="Pension Dashboard",
     page_icon="📈",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-
-# -----------------------------
-# Load prices data from Databricks
-# -----------------------------
-
-@st.cache_data(
-    ttl=3600,
-    show_spinner=False
-)
-def load_data():
-
-    with sql.connect(
-        server_hostname=st.secrets["databricks"]["server_hostname"],
-        http_path=st.secrets["databricks"]["http_path"],
-        access_token=st.secrets["databricks"]["access_token"]
-    ) as connection:
-
-        df = pd.read_sql(
-            """
-            SELECT *
-            FROM analytics.main.pensions_prices
-            WHERE Type = 'UPF'
-            AND Value > 0
-            """,
-            connection
-        )
-
-    return df
-
-
-# -----------------------------
-# Load insured persons data
-# -----------------------------
-
-@st.cache_data(
-    ttl=3600,
-    show_spinner=False
-)
-def load_members():
-
-    with sql.connect(
-        server_hostname=st.secrets["databricks"]["server_hostname"],
-        http_path=st.secrets["databricks"]["http_path"],
-        access_token=st.secrets["databricks"]["access_token"]
-    ) as connection:
-
-        df = pd.read_sql(
-            """
-            SELECT *
-            FROM analytics.main.pension_fund_members_upf
-            """,
-            connection
-        )
-
-    return df
-
-
-# -----------------------------
-# Prepare price data
-# -----------------------------
-
-df = load_data()
-
-df["Value"] = pd.to_numeric(
-    df["Value"],
-    errors="coerce"
+# Custom styling
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] {
+        background-color: #f8f9fa;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
-df = df.sort_values(
-    [
-        "Fund",
-        "Date"
-    ]
-)
-
-
-# -----------------------------
-# Prepare insured persons data
-# -----------------------------
-
-members = load_members()
-
-members["Value"] = pd.to_numeric(
-    members["Value"],
-    errors="coerce"
-)
-
-members["Date"] = pd.to_datetime(
-    dict(
-        year=members["Year"],
-        month=members["Month"],
-        day=1
-    )
-)
-
-members = members.sort_values(
-    [
-        "Fund",
-        "Date"
-    ]
-)
-
-
-# -----------------------------
-# Dashboard
-# -----------------------------
-
-st.title(
-    "📈 Bulgarian Pension Funds - UPF"
-)
-
-
-st.write(
-    f"Available UPF funds: {df['Fund'].nunique()}"
-)
-
-
-# -----------------------------
-# Chart - fund prices
-# -----------------------------
-
-fig = px.line(
-    df,
-    x="Date",
-    y="Value",
-    color="Fund",
-    title="UPF pension fund prices (EUR)",
-)
-
-
-fig.update_layout(
-    yaxis_title="Price (€)",
-    xaxis_title="Date",
-    hovermode="x unified",
-    legend_title="Fund",
-
-    legend=dict(
-        itemclick="toggleothers",
-        itemdoubleclick="toggle"
-    )
-)
-
-
-st.plotly_chart(
-    fig,
-    width="stretch"
-)
-
-
-# -----------------------------
-# Price data preview
-# -----------------------------
-
-with st.expander(
-    "Show price data"
-):
-
-    st.dataframe(
-        df,
-        width="stretch"
-    )
-
-
-# -----------------------------
-# Chart - insured persons
-# -----------------------------
-
-st.subheader(
-    "👥 UPF insured persons"
-)
-
-
-view_type = st.radio(
-    "View:",
-    [
-        "Trend",
-        "Market share"
-    ],
-    horizontal=True
-)
-
-
-if view_type == "Trend":
-
-    fig_members = px.line(
-        members,
-        x="Date",
-        y="Value",
-        color="Fund",
-        title="Number of insured persons in UPF",
-    )
-
-    fig_members.update_layout(
-        yaxis_title="Insured persons",
-        xaxis_title="Date",
-        hovermode="x unified",
-        legend_title="Fund",
-
-        legend=dict(
-            itemclick="toggleothers",
-            itemdoubleclick="toggle"
-        )
-    )
-
-
-else:
-
-    # Calculate market share
-    market = members.copy()
-
-    market["Total"] = (
-        market
-        .groupby("Date")["Value"]
-        .transform("sum")
-    )
-
-    market["Market Share"] = (
-        market["Value"] /
-        market["Total"] *
-        100
-    )
-
-
-    # Current ranking (highest market share at the bottom)
-    latest_date = market["Date"].max()
+# Sidebar
+st.sidebar.title("📈 Pension Dashboard")
+st.sidebar.markdown("---")
+st.sidebar.write(
+    """
+    Navigate through different sections using the menu on the left.
     
-    ranking = (
-        market[market["Date"] == latest_date]
-        .sort_values(
-            "Market Share",
-            ascending=False
-        )["Fund"]
-        .tolist()[::-1]
-    )
-
-
-    # Keep legend ordered by latest market share
-    market["Fund"] = pd.Categorical(
-        market["Fund"],
-        categories=ranking,
-        ordered=True
-    )
-
-
-    fig_members = px.area(
-        market.sort_values(
-            "Date"
-        ),
-        x="Date",
-        y="Market Share",
-        color="Fund",
-        groupnorm="percent",
-        title="UPF market share by insured persons (%)",
-    )
-
-
-    fig_members.update_layout(
-        yaxis_title="Market share (%)",
-        xaxis_title="Date",
-        hovermode="x unified",
-        legend_title="Fund",
-
-        legend=dict(
-            itemclick="toggleothers",
-            itemdoubleclick="toggle"
-        )
-    )
-
-
-    # Show latest ranking
-    st.caption(
-        "Current ranking (latest month): "
-        +
-        " → ".join(
-            [
-                f"{i+1}. {fund}"
-                for i, fund in enumerate(ranking)
-            ]
-        )
-    )
-
-
-st.plotly_chart(
-    fig_members,
-    width="stretch"
+    Each page provides different insights into Bulgarian UPF pension funds.
+    """
 )
 
-# -----------------------------
-# Members data preview
-# -----------------------------
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    "**Quick Links:**\n"
+    "- [Prices](./1_📈_prices)\n"
+    "- [Members](./2_👥_members)\n"
+    "- [Analytics](./3_📊_analytics)\n"
+    "- [Settings](./4_⚙️_settings)"
+)
 
-with st.expander(
-    "Show insured persons data"
-):
+# Main page content
+st.title("📈 Bulgarian Pension Funds Dashboard")
 
-    st.dataframe(
-        members,
-        width="stretch"
-    )
+st.markdown(
+    """
+    Welcome to the comprehensive UPF Pension Funds Dashboard!
+    
+    ### 📊 What's Available?
+    
+    **1. 📈 Prices Dashboard**
+    - Real-time UPF pension fund prices
+    - Historical price trends
+    - Fund comparison over time
+    
+    **2. 👥 Members Dashboard**
+    - Track insured persons by fund
+    - Monitor membership trends
+    - Analyze market share distribution
+    
+    **3. 📊 Analytics & Insights**
+    - Advanced analysis and metrics
+    - Fund performance comparison
+    - Growth analysis
+    
+    **4. ⚙️ Settings**
+    - Application information
+    - Technical details
+    - Support resources
+    
+    ### 🚀 Getting Started
+    
+    Select a page from the menu on the left to begin exploring!
+    """
+)
+
+st.info(
+    "💡 **Tip:** Data is automatically refreshed every hour. "
+    "You can download any data table as CSV using the download button in each section."
+)
