@@ -233,16 +233,16 @@ else:
     )
 
 
-    # Current ranking
+    # Current ranking (highest market share at the bottom)
     latest_date = market["Date"].max()
-
+    
     ranking = (
         market[market["Date"] == latest_date]
         .sort_values(
             "Market Share",
             ascending=False
         )["Fund"]
-        .tolist()
+        .tolist()[::-1]
     )
 
 
