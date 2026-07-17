@@ -13,12 +13,37 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom styling
+# Custom styling for dark mode consistency
 st.markdown(
     """
     <style>
+    /* Sidebar styling */
     [data-testid="stSidebar"] {
-        background-color: #f8f9fa;
+        background-color: #0e1117;
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
+        color: #ffffff;
+    }
+    
+    /* Main content area */
+    [data-testid="stMainBlockContainer"] {
+        background-color: #0e1117;
+        color: #ffffff;
+    }
+    
+    /* Text colors */
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff;
+    }
+    
+    p, span, div {
+        color: #e0e0e0;
+    }
+    
+    /* Links */
+    a {
+        color: #58a6ff;
     }
     </style>
     """,
